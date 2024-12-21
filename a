@@ -1,0 +1,239 @@
+Assignment 4
+Name: Devansh Singh
+Roll No: 102103686
+Subgroup: 3CO33
+Q1- (Based on Step-by-Step Implementation of Ridge Regression using Gradient
+Descent Optimization)
+Generate a dataset with atleast seven highly correlated columns and a target variable.
+Implement Ridge Regression using Gradient Descent Optimization. Take different
+values of learning rate (such as 0.0001,0.001,0.01,0.1,1,10) and regularization
+parameter (10-15,10-10,10-5
+,10- 3
+,0,1,10,20). Choose the best parameters for which ridge
+regression cost function is minimum and R2_score is maximum.
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge
+from sklearn.metrics import r2_score, mean_squared_error
+
+# (1) Data Preparation
+np.random.seed(42)
+num_samples = 100
+
+# Generate highly correlated features
+x1 = np.random.rand(num_samples)
+x2 = x1 + np.random.normal(0, 0.0001, num_samples)
+x3 = x1 + np.random.normal(0, 0.010, num_samples)
+x4 = x1 + np.random.normal(0, 0.01, num_samples)
+x5 = x1 + np.random.normal(0, 1, num_samples)
+x6 = x1 + np.random.normal(0, 1, num_samples)
+x7 = x1 + np.random.normal(0, 0, num_samples)
+
+# Create a target variable with some noise
+y = 5 * x1 + 3 * x2 + 2 * x3 + np.random.normal(0, 0.1, num_samples)
+
+# Create DataFrame
+data = pd.DataFrame({
+    'x1': x1,
+    'x2': x2,
+    'x3': x3,
+    'x4': x4,
+    'x5': x5,
+    'x6': x6,
+    'x7': x7,
+    'target': y
+})
+
+# (2) Split data into input features (X) and target (y)
+X = data.drop(columns=['target'])
+y = data['target']
+
+# (3) Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# (4) Standardize the features (important for Ridge Regression)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# (5) Define the list of regularization parameters
+alphas = [1e-15, 1e-10, 1e-5, 1e-3, 0, 1, 10, 20]
+
+# (6) Apply Ridge Regression for each regularization parameter
+results = []
+for alpha in alphas:
+    # Initialize and fit the Ridge Regression model
+    ridge_reg = Ridge(alpha=alpha)
+    ridge_reg.fit(X_train, y_train)
+
+    # Make predictions
+    y_pred_train = ridge_reg.predict(X_train)
+    y_pred_test = ridge_reg.predict(X_test)
+
+    # Evaluate the model
+    r2_train = r2_score(y_train, y_pred_train)
+    r2_test = r2_score(y_test, y_pred_test)
+    mse_train = mean_squared_error(y_train, y_pred_train)
+    mse_test = mean_squared_error(y_test, y_pred_test)
+
+    # Store the results
+    results.append({
+        'alpha': alpha,
+        'train_r2': r2_train,
+        'test_r2': r2_test,
+        'train_mse': mse_train,
+        'test_mse': mse_test
+    })
+
+    # Output the results for the current alpha
+    print(f"Ridge Regression (alpha={alpha}):")
+    print(f"Train R²: {r2_train:.4f}, Test R²: {r2_test:.4f}")
+    print(f"Train MSE: {mse_train:.4f}, Test MSE: {mse_test:.4f}\n")
+
+# (7) Find the best alpha based on test R² score
+best_result = max(results, key=lambda x: x['test_r2'])
+
+print(f"Best alpha: {best_result['alpha']}")
+print(f"Best Test R²: {best_result['test_r2']:.4f}")
+print(f"Best Test MSE: {best_result['test_mse']:.4f}")
+Q2- Load the Hitters dataset from the following link
+https://drive.google.com/file/d/1qzCKF6JKKMB0p7ul_lLy8tdmRk3vE_bG/view?usp=sharing
+(a) Pre-process the data (null values, noise, categorical to numerical encoding)
+(b) Separate input and output features and perform scaling
+(c) Fit a Linear, Ridge (use regularization parameter as 0.5748), and LASSO (use
+regularization parameter as 0.5748) regression function on the dataset.
+(d) Evaluate the performance of each trained model on test set. Which model performs
+the best and Why?
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Load dataset
+url = 'https://raw.githubusercontent.com/selva86/datasets/master/Hitters.csv'
+df = pd.read_csv(url)
+
+# (a) Pre-process the data
+# Remove rows with null values
+df.dropna(inplace=True)
+
+# Convert categorical data to numerical encoding using one-hot encoding
+df = pd.get_dummies(df, drop_first=True)
+
+# (b) Separate input and output features and perform scaling
+X = df.drop('Salary', axis=1)  # Input features
+y = df['Salary']  # Output feature
+
+# Train-test split (80% training and 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Perform scaling on input features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# (c) Fit a Linear, Ridge, and Lasso regression function on the dataset
+# Linear Regression
+lin_reg = LinearRegression()
+lin_reg.fit(X_train_scaled, y_train)
+
+# Ridge Regression with regularization parameter = 0.5748
+ridge_reg = Ridge(alpha=0.5748)
+ridge_reg.fit(X_train_scaled, y_train)
+
+# Lasso Regression with regularization parameter = 0.5748
+lasso_reg = Lasso(alpha=0.5748)
+lasso_reg.fit(X_train_scaled, y_train)
+
+# (d) Evaluate performance of each model on test set
+# Function to calculate performance metrics
+def evaluate_model(model, X_test, y_test):
+    y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    return mse, r2
+
+# Evaluate Linear Regression
+mse_lin, r2_lin = evaluate_model(lin_reg, X_test_scaled, y_test)
+
+# Evaluate Ridge Regression
+mse_ridge, r2_ridge = evaluate_model(ridge_reg, X_test_scaled, y_test)
+
+# Evaluate Lasso Regression
+mse_lasso, r2_lasso = evaluate_model(lasso_reg, X_test_scaled, y_test)
+
+# Print performance of each model
+print("Linear Regression - MSE:", mse_lin, "R2 Score:", r2_lin)
+print("Ridge Regression - MSE:", mse_ridge, "R2 Score:", r2_ridge)
+print("Lasso Regression - MSE:", mse_lasso, "R2 Score:", r2_lasso)
+
+# Find which model performs the best
+if mse_lin < mse_ridge and mse_lin < mse_lasso:
+    best_model = "Linear Regression"
+elif mse_ridge < mse_lin and mse_ridge < mse_lasso:
+    best_model = "Ridge Regression"
+else:
+    best_model = "Lasso Regression"
+
+print(f"The best performing model is: {best_model}")
+
+Q3- Cross Validation for Ridge and Lasso Regression
+Explore Ridge Cross Validation (RidgeCV) and Lasso Cross Validation (LassoCV)
+function of Python. Implement both on Boston House Prediction Dataset (load_boston
+dataset from sklearn.datasets).
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import RidgeCV, LassoCV
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.datasets import fetch_california_housing  # Alternative to deprecated load_boston
+
+# Load the dataset
+data = fetch_california_housing()
+X = pd.DataFrame(data.data, columns=data.feature_names)
+y = pd.Series(data.target, name="Price")
+
+# Train-test split (80% training and 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Perform scaling on input features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# (a) Implement RidgeCV for Ridge Regression with cross-validation
+# RidgeCV automatically selects the best alpha from a list of alphas using cross-validation
+alphas = np.logspace(-6, 6, 100)  # Logarithmic range of alphas to search
+ridge_cv = RidgeCV(alphas=alphas, store_cv_values=True)  # store_cv_values for diagnostic purposes
+ridge_cv.fit(X_train_scaled, y_train)
+
+# Evaluate RidgeCV model
+y_pred_ridge = ridge_cv.predict(X_test_scaled)
+mse_ridge = mean_squared_error(y_test, y_pred_ridge)
+r2_ridge = r2_score(y_test, y_pred_ridge)
+
+print("Best alpha for RidgeCV:", ridge_cv.alpha_)
+print("RidgeCV - MSE:", mse_ridge, "R2 Score:", r2_ridge)
+
+# (b) Implement LassoCV for Lasso Regression with cross-validation
+lasso_cv = LassoCV(alphas=alphas, cv=5, random_state=42)  # cv=5 for 5-fold cross-validation
+lasso_cv.fit(X_train_scaled, y_train)
+
+# Evaluate LassoCV model
+y_pred_lasso = lasso_cv.predict(X_test_scaled)
+mse_lasso = mean_squared_error(y_test, y_pred_lasso)
+r2_lasso = r2_score(y_test, y_pred_lasso)
+
+print("Best alpha for LassoCV:", lasso_cv.alpha_)
+print("LassoCV - MSE:", mse_lasso, "R2 Score:", r2_lasso)
+
+# Print the best performing model based on MSE
+if mse_ridge < mse_lasso:
+    print("RidgeCV performs better with lower MSE.")
+else:
+    print("LassoCV performs better with lower MSE.")
